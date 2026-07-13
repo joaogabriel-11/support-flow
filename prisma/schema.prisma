@@ -1,0 +1,311 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/**
+ * |--------------------------------------------------------------------------
+ * | ENUMS
+ * |--------------------------------------------------------------------------
+ */
+
+enum UserRole {
+  SOLICITANTE
+  AGENTE
+  ADMIN
+}
+
+enum TicketStatus {
+  ABERTO
+  EM_ANDAMENTO
+  AGUARDANDO_SOLICITANTE
+  RESOLVIDO
+  FECHADO
+}
+
+enum TicketPriority {
+  BAIXA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+enum CommentType {
+  PUBLICO
+  INTERNO
+}
+
+enum ActivityType {
+  CHAMADO_CRIADO
+
+  CHAMADO_ATRIBUIDO
+  CHAMADO_REATRIBUIDO
+
+  STATUS_ALTERADO
+  STATUS_ALTERADO_AUTOMATICAMENTE
+
+  PRIORIDADE_ALTERADA
+}
+
+/**
+ * |--------------------------------------------------------------------------
+ * | USUÁRIOS
+ * |--------------------------------------------------------------------------
+ */
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(SOLICITANTE)
+  isActive     Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Chamados criados pelo usuário.
+  requestedTickets Ticket[] @relation("TicketRequester")
+
+  // Chamados pelos quais o agente é responsável.
+  assignedTickets Ticket[] @relation("TicketAgent")
+
+  // Comentários e notas criados pelo usuário.
+  comments TicketComment[]
+
+  // Ações realizadas pelo usuário.
+  activities TicketActivity[]
+
+  @@index([role])
+  @@index([isActive])
+  @@map("users")
+}
+
+/**
+ * |--------------------------------------------------------------------------
+ * | CATEGORIAS
+ * |--------------------------------------------------------------------------
+ */
+
+model Category {
+  id       String  @id @default(cuid())
+  name     String  @unique
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tickets Ticket[]
+
+  @@index([isActive])
+  @@map("categories")
+}
+
+/**
+ * |--------------------------------------------------------------------------
+ * | CHAMADOS
+ * |--------------------------------------------------------------------------
+ */
+
+model Ticket {
+  id String @id @default(cuid())
+
+  // Número amigável para exibição:
+  // #1, #2, #3...
+  number Int @unique @default(autoincrement())
+
+  title       String
+  description String
+
+  status   TicketStatus   @default(ABERTO)
+  priority TicketPriority
+
+  /**
+   * |--------------------------------------------------------------------------
+   * | SOLICITANTE
+   * |--------------------------------------------------------------------------
+   */
+
+  requesterId String
+
+  requester User @relation("TicketRequester", fields: [requesterId], references: [id], onDelete: Restrict)
+
+  /**
+   * |--------------------------------------------------------------------------
+   * | AGENTE RESPONSÁVEL
+   * |--------------------------------------------------------------------------
+   */
+
+  agentId String?
+
+  agent User? @relation("TicketAgent", fields: [agentId], references: [id], onDelete: Restrict)
+
+  /**
+   * |--------------------------------------------------------------------------
+   * | CATEGORIA
+   * |--------------------------------------------------------------------------
+   */
+
+  categoryId String
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  /**
+   * |--------------------------------------------------------------------------
+   * | DATAS
+   * |--------------------------------------------------------------------------
+   */
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignedAt DateTime?
+  resolvedAt DateTime?
+  closedAt   DateTime?
+
+  /**
+   * |--------------------------------------------------------------------------
+   * | RELACIONAMENTOS
+   * |--------------------------------------------------------------------------
+   */
+
+  comments   TicketComment[]
+  activities TicketActivity[]
+
+  /**
+   * |--------------------------------------------------------------------------
+   * | ÍNDICES
+   * |--------------------------------------------------------------------------
+   */
+
+  @@index([status])
+  @@index([priority])
+  @@index([requesterId])
+  @@index([agentId])
+  @@index([categoryId])
+  @@index([createdAt])
+  // Útil para a fila geral:
+  // status ABERTO + sem agente.
+  @@index([status, agentId])
+  // Útil para listar chamados de um agente por status.
+  @@index([agentId, status])
+  // Útil para listar chamados do solicitante.
+  @@index([requesterId, createdAt])
+  @@map("tickets")
+}
+
+/**
+ * |--------------------------------------------------------------------------
+ * | COMENTÁRIOS E NOTAS INTERNAS
+ * |--------------------------------------------------------------------------
+ */
+
+model TicketComment {
+  id      String      @id @default(cuid())
+  content String
+  type    CommentType @default(PUBLICO)
+
+  ticketId String
+  authorId String
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Restrict)
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+  @@index([authorId])
+  @@index([ticketId, createdAt])
+  @@index([ticketId, type])
+  @@map("ticket_comments")
+}
+
+/**
+ * |--------------------------------------------------------------------------
+ * | HISTÓRICO DE ATIVIDADES
+ * |--------------------------------------------------------------------------
+ */
+
+model TicketActivity {
+  id   String       @id @default(cuid())
+  type ActivityType
+
+  /**
+   * |--------------------------------------------------------------------------
+   * | VALORES ALTERADOS
+   * |--------------------------------------------------------------------------
+   * |
+   * | Exemplos:
+   * |
+   * | STATUS:
+   * | previousValue = "ABERTO"
+   * | newValue      = "EM_ANDAMENTO"
+   * |
+   * | PRIORIDADE:
+   * | previousValue = "CRITICA"
+   * | newValue      = "BAIXA"
+   * |
+   * | REATRIBUIÇÃO:
+   * | previousValue = ID do agente anterior
+   * | newValue      = ID do novo agente
+   * |
+   */
+
+  previousValue String?
+  newValue      String?
+
+  /**
+   * |--------------------------------------------------------------------------
+   * | METADADOS ADICIONAIS
+   * |--------------------------------------------------------------------------
+   * |
+   * | Campo opcional para informações complementares.
+   * |
+   * | Exemplo:
+   * |
+   * | {
+   * |   "automatic": true,
+   * |   "reason": "Solicitante respondeu ao chamado"
+   * | }
+   * |
+   */
+
+  metadata Json?
+
+  /**
+   * |--------------------------------------------------------------------------
+   * | CHAMADO
+   * |--------------------------------------------------------------------------
+   */
+
+  ticketId String
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Restrict)
+
+  /**
+   * |--------------------------------------------------------------------------
+   * | AUTOR DA AÇÃO
+   * |--------------------------------------------------------------------------
+   * |
+   * | Opcional porque uma ação pode ser executada automaticamente
+   * | pelo sistema.
+   * |
+   */
+
+  actorId String?
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+  @@index([actorId])
+  @@index([ticketId, createdAt])
+  @@index([type])
+  @@map("ticket_activities")
+}
