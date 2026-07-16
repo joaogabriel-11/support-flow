@@ -1,11 +1,13 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { LoginForm } from "./login-form";
+import { HOME_BY_ROLE } from "@/lib/authorization";
 
 export default async function LoginPage() {
   const session = await auth();
 
-  if (session?.user) redirect("/");
+  if (session?.user && session.user.isActive)
+    redirect(HOME_BY_ROLE[session.user.role]);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
