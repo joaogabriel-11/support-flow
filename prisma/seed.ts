@@ -1,6 +1,6 @@
 import "dotenv/config";
 import bcrypt from "bcryptjs";
-import { prisma } from "../lib/prisma";
+import { prisma } from "@/lib/prisma";
 
 const ADMIN_EMAIL = "admin@supportflow.com";
 const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? "admin123";
