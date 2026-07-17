@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
-import { prisma } from "../lib/prisma";
+import { authenticateUser } from "@/features/auth/authenticate-user";
+import { prismaAuthDependencies } from "@/features/auth/prisma-auth-dependencies";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
@@ -13,33 +13,14 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         password: { label: "Senha", type: "password" },
       },
       async authorize(credentials) {
-        const email =
-          typeof credentials.email === "string"
-            ? credentials.email.trim().toLowerCase()
-            : "";
-        const password =
-          typeof credentials.password === "string" ? credentials.password : "";
-
-        if (!email || !password) return null;
-
-        const user = await prisma.user.findUnique({ where: { email } });
-
-        if (!user || !user.isActive) return null;
-
-        const passwordIsValid = await bcrypt.compare(
-          password,
-          user.passwordHash,
+        return authenticateUser(
+          {
+            email: typeof credentials.email === "string" ? credentials.email : "",
+            password:
+              typeof credentials.password === "string" ? credentials.password : "",
+          },
+          prismaAuthDependencies,
         );
-
-        if (!passwordIsValid) return null;
-
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          isActive: user.isActive,
-        };
       },
     }),
   ],
