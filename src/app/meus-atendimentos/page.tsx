@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { CompleteTicketForm } from "@/app/meus-atendimentos/status-form";
 import { ResolvedTicketsSection } from "@/components/resolved-tickets-section";
 import { prisma } from "@/lib/prisma";
+import Link from "next/link";
 
 const priorityStyles = {
   BAIXA: "bg-slate-100 text-slate-700",
@@ -87,6 +88,12 @@ export default async function Page() {
       {ticket.status === "EM_ANDAMENTO" ? (
         <CompleteTicketForm ticketId={ticket.id} />
       ) : null}
+      <Link
+        href={`/chamados/${ticket.id}`}
+        className="mt-4 inline-flex text-sm font-bold text-blue-700 hover:text-blue-900"
+      >
+        Ver detalhes
+      </Link>
     </article>
   );
 

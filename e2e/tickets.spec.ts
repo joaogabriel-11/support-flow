@@ -35,6 +35,13 @@ test("solicitante abre um chamado e visualiza no historico", async ({
     "Chamado aberto com sucesso.",
   );
   await expect(page.getByRole("heading", { name: title })).toBeVisible();
+  await page
+    .getByRole("article", { name: title })
+    .getByRole("link", { name: "Ver detalhes" })
+    .click();
+  await expect(page.getByRole("heading", { name: title })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Historico" })).toBeVisible();
+  await expect(page.getByText("Chamado criado")).toBeVisible();
 
   await page.context().clearCookies();
   await page.goto("/login");
@@ -60,6 +67,11 @@ test("solicitante abre um chamado e visualiza no historico", async ({
   await page.goto("/meus-atendimentos");
   const assignedTicket = page.getByRole("article", { name: title });
   await expect(assignedTicket.getByRole("heading", { name: title })).toBeVisible();
+  await assignedTicket.getByRole("link", { name: "Ver detalhes" }).click();
+  await expect(page.getByText("Chamado assumido")).toBeVisible();
+  await page.getByRole("link", { name: "Voltar para a listagem" }).click();
+  await expect(page).toHaveURL(/\/meus-atendimentos$/);
+
   const resolvedDetails = page.locator("details").filter({
     hasText: "Resolvidos",
   });

@@ -14,6 +14,10 @@ export const PRIVATE_ROUTE_ROLES: Record<string, UserRole[]> = {
 };
 
 export function rolesForPath(pathname: string) {
+  if (pathname.startsWith("/chamados/")) {
+    return ["SOLICITANTE", "AGENTE", "ADMIN"] satisfies UserRole[];
+  }
+
   const route = Object.keys(PRIVATE_ROUTE_ROLES).find(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
