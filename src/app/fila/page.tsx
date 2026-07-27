@@ -1,3 +1,5 @@
+import { auth } from "@/auth";
+import { AssignTicketButton } from "@/app/fila/assign-ticket-button";
 import { prisma } from "@/lib/prisma";
 
 const priorityStyles = {
@@ -15,6 +17,7 @@ const priorityLabels = {
 };
 
 export default async function Page() {
+  const session = await auth();
   const tickets = await prisma.ticket.findMany({
     where: { status: "ABERTO", agentId: null },
     orderBy: [{ priority: "desc" }, { createdAt: "asc" }],
@@ -64,6 +67,7 @@ export default async function Page() {
           {tickets.map((ticket) => (
             <article
               key={ticket.id}
+              aria-labelledby={`ticket-${ticket.id}-title`}
               className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
             >
               <div className="flex items-start justify-between gap-4">
@@ -71,7 +75,10 @@ export default async function Page() {
                   <p className="text-xs font-bold uppercase tracking-wider text-blue-600">
                     #{ticket.number} · {ticket.category.name}
                   </p>
-                  <h2 className="mt-2 text-lg font-bold text-slate-950">
+                  <h2
+                    id={`ticket-${ticket.id}-title`}
+                    className="mt-2 text-lg font-bold text-slate-950"
+                  >
                     {ticket.title}
                   </h2>
                 </div>
@@ -113,6 +120,9 @@ export default async function Page() {
                   </time>
                 </div>
               </div>
+              {session?.user.role === "AGENTE" ? (
+                <AssignTicketButton ticketId={ticket.id} />
+              ) : null}
             </article>
           ))}
         </section>

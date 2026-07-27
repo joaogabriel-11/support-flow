@@ -4,6 +4,8 @@ const requesterEmail =
   process.env.E2E_REQUESTER_EMAIL ?? "solicitante.e2e@supportflow.com";
 const requesterPassword = process.env.E2E_ADMIN_PASSWORD;
 const adminEmail = process.env.E2E_ADMIN_EMAIL;
+const agentEmail =
+  process.env.E2E_AGENT_EMAIL ?? "agente.e2e@supportflow.com";
 
 test.skip(
   !requesterPassword,
@@ -43,4 +45,47 @@ test("solicitante abre um chamado e visualiza no historico", async ({
 
   await page.goto("/fila");
   await expect(page.getByRole("heading", { name: title })).toBeVisible();
+
+  await page.context().clearCookies();
+  await page.goto("/login");
+  await page.getByLabel("E-mail").fill(agentEmail);
+  await page.getByLabel("Senha").fill(requesterPassword!);
+  await page.getByRole("button", { name: "Entrar" }).click();
+  await expect(page).toHaveURL(/\/fila$/);
+
+  const ticketInQueue = page.getByRole("article", { name: title });
+  await ticketInQueue.getByRole("button", { name: "Assumir chamado" }).click();
+  await expect(ticketInQueue).toBeHidden();
+
+  await page.goto("/meus-atendimentos");
+  const assignedTicket = page.getByRole("article", { name: title });
+  await expect(assignedTicket.getByRole("heading", { name: title })).toBeVisible();
+  const resolvedDetails = page.locator("details").filter({
+    hasText: "Resolvidos",
+  });
+  const showResolvedButton = resolvedDetails.locator("summary");
+  const showResolvedLabel = showResolvedButton.getByText(
+    /Mostrar resolvidos/,
+  );
+  const resolvedCountBefore = Number(
+    (await showResolvedLabel.textContent())?.match(/\d+/)?.[0] ?? 0,
+  );
+
+  await assignedTicket
+    .getByRole("button", { name: "Marcar como concluido" })
+    .click();
+
+  await expect(assignedTicket).toBeHidden();
+  await expect(showResolvedLabel).toHaveText(
+    `Mostrar resolvidos (${resolvedCountBefore + 1})`,
+  );
+  await showResolvedButton.click();
+  await expect(resolvedDetails).toHaveAttribute("open", "");
+  await expect(assignedTicket).toContainText("Resolvido");
+  await expect(
+    assignedTicket.getByRole("button", { name: "Marcar como concluido" }),
+  ).toHaveCount(0);
+  await showResolvedButton.click();
+  await expect(resolvedDetails).not.toHaveAttribute("open", "");
+  await expect(assignedTicket).toBeHidden();
 });

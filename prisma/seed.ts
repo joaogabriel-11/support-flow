@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 const ADMIN_EMAIL = "admin@supportflow.com";
 const REQUESTER_EMAIL =
   process.env.E2E_REQUESTER_EMAIL ?? "solicitante.e2e@supportflow.com";
+const AGENT_EMAIL =
+  process.env.E2E_AGENT_EMAIL ?? "agente.e2e@supportflow.com";
 const ADMIN_PASSWORD =
   process.env.SEED_ADMIN_PASSWORD ??
   process.env.E2E_ADMIN_PASSWORD ??
@@ -31,6 +33,23 @@ async function main() {
       email: ADMIN_EMAIL,
       passwordHash,
       role: "ADMIN",
+      isActive: true,
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: AGENT_EMAIL },
+    update: {
+      name: "Agente E2E",
+      passwordHash,
+      role: "AGENTE",
+      isActive: true,
+    },
+    create: {
+      name: "Agente E2E",
+      email: AGENT_EMAIL,
+      passwordHash,
+      role: "AGENTE",
       isActive: true,
     },
   });
@@ -63,7 +82,7 @@ async function main() {
   );
 
   console.log(
-    "Seed concluido: administrador, solicitante E2E e 4 categorias iniciais.",
+    "Seed concluido: administrador, solicitante, agente E2E e 4 categorias.",
   );
 }
 
