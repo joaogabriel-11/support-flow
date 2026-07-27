@@ -22,6 +22,7 @@ jobs:
       E2E_ADMIN_EMAIL: admin@supportflow.com
       E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
       E2E_REQUESTER_EMAIL: solicitante.e2e@supportflow.com
+      E2E_AGENT_EMAIL: agente.e2e@supportflow.com
     steps:
       - name: Baixar o repositorio
         uses: actions/checkout@v5
