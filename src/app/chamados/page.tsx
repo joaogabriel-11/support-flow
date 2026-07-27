@@ -1,7 +1,8 @@
 import { TicketForm } from "@/app/chamados/ticket-form";
-import { auth } from "@/auth";
 import { ResolvedTicketsSection } from "@/components/resolved-tickets-section";
 import { prisma } from "@/lib/prisma";
+import { requirePathAccess } from "@/lib/server-authorization";
+import Link from "next/link";
 
 const priorityStyles = {
   BAIXA: "bg-slate-100 text-slate-700",
@@ -21,8 +22,7 @@ const statusOrder = { EM_ANDAMENTO: 0, AGUARDANDO_SOLICITANTE: 0, ABERTO: 1, RES
 const priorityOrder = { CRITICA: 0, ALTA: 1, MEDIA: 2, BAIXA: 3 };
 
 export default async function Page() {
-  const session = await auth();
-  if (!session?.user) return null;
+  const session = await requirePathAccess("/chamados");
 
   const [categories, tickets] = await Promise.all([
     prisma.category.findMany({
@@ -82,6 +82,12 @@ export default async function Page() {
           {new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(ticket.createdAt)}
         </time>
       </div>
+      <Link
+        href={`/chamados/${ticket.id}`}
+        className="mt-4 inline-flex text-sm font-bold text-blue-700 hover:text-blue-900"
+      >
+        Ver detalhes
+      </Link>
     </article>
   );
 

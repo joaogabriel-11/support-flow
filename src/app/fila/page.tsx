@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { AssignTicketButton } from "@/app/fila/assign-ticket-button";
 import { prisma } from "@/lib/prisma";
+import Link from "next/link";
 
 const priorityStyles = {
   BAIXA: "bg-slate-100 text-slate-700",
@@ -122,6 +123,14 @@ export default async function Page() {
               </div>
               {session?.user.role === "AGENTE" ? (
                 <AssignTicketButton ticketId={ticket.id} />
+              ) : null}
+              {session?.user.role === "ADMIN" ? (
+                <Link
+                  href={`/chamados/${ticket.id}`}
+                  className="mt-5 inline-flex text-sm font-bold text-blue-700 hover:text-blue-900"
+                >
+                  Ver detalhes
+                </Link>
               ) : null}
             </article>
           ))}
