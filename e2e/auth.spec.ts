@@ -42,7 +42,7 @@ test.describe("administrador autenticado", () => {
 
   test("entra no sistema e acessa as areas permitidas", async ({ page }) => {
     await expect(
-      page.getByRole("heading", { name: /Administra/ }),
+      page.getByRole("heading", { name: "Gestao de usuarios" }),
     ).toBeVisible();
 
     await page.goto("/fila");
@@ -63,5 +63,28 @@ test.describe("administrador autenticado", () => {
     await expect(
       page.getByRole("heading", { name: "Acesso negado" }),
     ).toBeVisible();
+  });
+
+  test("cria, desativa e reativa um usuario", async ({ page }) => {
+    const suffix = Date.now();
+    const name = `Agente Admin E2E ${suffix}`;
+
+    await page.getByLabel("Nome").fill(name);
+    await page.getByLabel("E-mail").fill(`agente.admin.${suffix}@supportflow.com`);
+    await page.getByLabel("Perfil").selectOption("AGENTE");
+    await page.getByLabel("Senha inicial").fill("senha-e2e-segura");
+    await page.getByRole("button", { name: "Criar usuario" }).click();
+
+    await expect(page.getByRole("status")).toContainText(
+      "Usuario criado com sucesso.",
+    );
+    const userRow = page.getByRole("row", { name: new RegExp(name) });
+    await expect(userRow).toContainText("Agente");
+    await expect(userRow).toContainText("Ativo");
+
+    await userRow.getByRole("button", { name: "Desativar" }).click();
+    await expect(userRow).toContainText("Inativo");
+    await userRow.getByRole("button", { name: "Ativar" }).click();
+    await expect(userRow).toContainText("Ativo");
   });
 });
