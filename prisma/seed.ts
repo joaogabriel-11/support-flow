@@ -3,6 +3,8 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
 const ADMIN_EMAIL = "admin@supportflow.com";
+const REQUESTER_EMAIL =
+  process.env.E2E_REQUESTER_EMAIL ?? "solicitante.e2e@supportflow.com";
 const ADMIN_PASSWORD =
   process.env.SEED_ADMIN_PASSWORD ??
   process.env.E2E_ADMIN_PASSWORD ??
@@ -33,6 +35,23 @@ async function main() {
     },
   });
 
+  await prisma.user.upsert({
+    where: { email: REQUESTER_EMAIL },
+    update: {
+      name: "Solicitante E2E",
+      passwordHash,
+      role: "SOLICITANTE",
+      isActive: true,
+    },
+    create: {
+      name: "Solicitante E2E",
+      email: REQUESTER_EMAIL,
+      passwordHash,
+      role: "SOLICITANTE",
+      isActive: true,
+    },
+  });
+
   await Promise.all(
     INITIAL_CATEGORIES.map((name) =>
       prisma.category.upsert({
@@ -43,7 +62,9 @@ async function main() {
     ),
   );
 
-  console.log("Seed concluido: 1 administrador e 4 categorias iniciais.");
+  console.log(
+    "Seed concluido: administrador, solicitante E2E e 4 categorias iniciais.",
+  );
 }
 
 main()

@@ -21,6 +21,7 @@ jobs:
       AUTH_URL: http://127.0.0.1:3000
       E2E_ADMIN_EMAIL: admin@supportflow.com
       E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+      E2E_REQUESTER_EMAIL: solicitante.e2e@supportflow.com
     steps:
       - name: Baixar o repositorio
         uses: actions/checkout@v5
