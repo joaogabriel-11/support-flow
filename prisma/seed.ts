@@ -3,16 +3,24 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
 const ADMIN_EMAIL = "admin@supportflow.com";
-const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? "admin123";
+const ADMIN_PASSWORD =
+  process.env.SEED_ADMIN_PASSWORD ??
+  process.env.E2E_ADMIN_PASSWORD ??
+  (process.env.CI ? undefined : "admin123");
 const INITIAL_CATEGORIES = ["Hardware", "Software", "Rede", "Acesso"];
 
 async function main() {
+  if (!ADMIN_PASSWORD) {
+    throw new Error("Senha do administrador nao configurada no CI.");
+  }
+
   const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 12);
 
   await prisma.user.upsert({
     where: { email: ADMIN_EMAIL },
     update: {
       name: "Administrador",
+      passwordHash,
       role: "ADMIN",
       isActive: true,
     },

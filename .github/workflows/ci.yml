@@ -19,6 +19,8 @@ jobs:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
       AUTH_URL: http://localhost:3000
+      E2E_ADMIN_EMAIL: admin@supportflow.com
+      E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
     steps:
       - name: Baixar o repositorio
         uses: actions/checkout@v5
@@ -35,6 +37,12 @@ jobs:
       - name: Gerar Prisma Client
         run: npx prisma generate
 
+      - name: Aplicar migrations
+        run: npx prisma migrate deploy
+
+      - name: Preparar dados de teste
+        run: npx prisma db seed
+
       - name: Executar ESLint
         run: npm run lint
 
@@ -43,3 +51,9 @@ jobs:
 
       - name: Gerar build
         run: npm run build
+
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Executar testes E2E
+        run: npm run test:e2e
