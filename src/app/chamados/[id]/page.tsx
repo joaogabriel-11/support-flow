@@ -1,3 +1,4 @@
+import { CommentForm } from "@/app/chamados/[id]/comment-form";
 import { canViewTicket } from "@/features/tickets/can-view-ticket";
 import { prisma } from "@/lib/prisma";
 import { requireActiveSession } from "@/lib/server-authorization";
@@ -52,6 +53,16 @@ export default async function TicketDetailsPage({
         orderBy: { createdAt: "asc" },
         include: { actor: { select: { name: true } } },
       },
+      comments: {
+        where:
+          session.user.role === "SOLICITANTE"
+            ? { type: "PUBLICO" }
+            : undefined,
+        orderBy: { createdAt: "asc" },
+        include: {
+          author: { select: { name: true, role: true } },
+        },
+      },
     },
   });
 
@@ -92,6 +103,66 @@ export default async function TicketDetailsPage({
             <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-slate-600">
               {ticket.description}
             </p>
+          </section>
+
+          <section
+            aria-labelledby="conversation-title"
+            className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+          >
+            <div>
+              <h2 id="conversation-title" className="text-xl font-bold text-slate-950">
+                Conversa
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Mensagens e atualizacoes sobre este atendimento.
+              </p>
+            </div>
+            {ticket.comments.length ? (
+              <div className="mt-6 space-y-4">
+                {ticket.comments.map((comment) => (
+                  <article
+                    key={comment.id}
+                    className={`rounded-2xl border p-5 ${
+                      comment.type === "INTERNO"
+                        ? "border-amber-200 bg-amber-50"
+                        : "border-slate-200 bg-slate-50"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="font-bold text-slate-950">
+                          {comment.author.name}
+                        </p>
+                        <p className="mt-0.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                          {comment.type === "INTERNO"
+                            ? "Nota interna"
+                            : comment.author.role === "SOLICITANTE"
+                              ? "Solicitante"
+                              : "Equipe de suporte"}
+                        </p>
+                      </div>
+                      <time
+                        dateTime={comment.createdAt.toISOString()}
+                        className="text-xs text-slate-500"
+                      >
+                        {formatDate(comment.createdAt)}
+                      </time>
+                    </div>
+                    <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                      {comment.content}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-6 rounded-2xl border border-dashed border-slate-300 p-5 text-sm text-slate-500">
+                Nenhuma mensagem enviada ainda.
+              </p>
+            )}
+            <CommentForm
+              ticketId={ticket.id}
+              canCreateInternal={session.user.role !== "SOLICITANTE"}
+            />
           </section>
 
           <section aria-labelledby="history-title">

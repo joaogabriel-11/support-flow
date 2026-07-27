@@ -42,6 +42,14 @@ test("solicitante abre um chamado e visualiza no historico", async ({
   await expect(page.getByRole("heading", { name: title })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Historico" })).toBeVisible();
   await expect(page.getByText("Chamado criado")).toBeVisible();
+  const ticketDetailsUrl = page.url();
+  const requesterMessage = `Mensagem publica do solicitante ${Date.now()}`;
+  await page.getByLabel("Mensagem").fill(requesterMessage);
+  await page.getByRole("button", { name: "Enviar mensagem" }).click();
+  await expect(page.getByRole("status")).toContainText(
+    "Mensagem enviada com sucesso.",
+  );
+  await expect(page.getByText(requesterMessage)).toBeVisible();
 
   await page.context().clearCookies();
   await page.goto("/login");
@@ -69,6 +77,22 @@ test("solicitante abre um chamado e visualiza no historico", async ({
   await expect(assignedTicket.getByRole("heading", { name: title })).toBeVisible();
   await assignedTicket.getByRole("link", { name: "Ver detalhes" }).click();
   await expect(page.getByText("Chamado assumido")).toBeVisible();
+  await expect(page.getByText(requesterMessage)).toBeVisible();
+  const agentMessage = `Resposta publica do agente ${Date.now()}`;
+  await page.getByLabel("Visibilidade").selectOption("PUBLICO");
+  await page.getByLabel("Mensagem").fill(agentMessage);
+  await page.getByRole("button", { name: "Enviar mensagem" }).click();
+  await expect(page.getByText(agentMessage)).toBeVisible();
+
+  const internalNote = `Nota interna do agente ${Date.now()}`;
+  await page.getByLabel("Visibilidade").selectOption("INTERNO");
+  await page.getByLabel("Mensagem").fill(internalNote);
+  await page.getByRole("button", { name: "Enviar mensagem" }).click();
+  const internalNoteCard = page.getByRole("article").filter({
+    hasText: internalNote,
+  });
+  await expect(internalNoteCard).toBeVisible();
+  await expect(internalNoteCard).toContainText("Nota interna");
   await page.getByRole("link", { name: "Voltar para a listagem" }).click();
   await expect(page).toHaveURL(/\/meus-atendimentos$/);
 
@@ -100,4 +124,13 @@ test("solicitante abre um chamado e visualiza no historico", async ({
   await showResolvedButton.click();
   await expect(resolvedDetails).not.toHaveAttribute("open", "");
   await expect(assignedTicket).toBeHidden();
+
+  await page.context().clearCookies();
+  await page.goto("/login");
+  await page.getByLabel("E-mail").fill(requesterEmail);
+  await page.getByLabel("Senha").fill(requesterPassword!);
+  await page.getByRole("button", { name: "Entrar" }).click();
+  await page.goto(ticketDetailsUrl);
+  await expect(page.getByText(agentMessage)).toBeVisible();
+  await expect(page.getByText(internalNote)).toHaveCount(0);
 });
