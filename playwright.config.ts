@@ -1,4 +1,12 @@
+import "dotenv/config";
 import { defineConfig, devices } from "@playwright/test";
+
+if (
+  process.env.CI &&
+  (!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD)
+) {
+  throw new Error("Credenciais E2E do administrador nao configuradas no CI.");
+}
 
 export default defineConfig({
   testDir: "./e2e",
