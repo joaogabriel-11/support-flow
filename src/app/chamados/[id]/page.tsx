@@ -36,6 +36,38 @@ function formatDate(date: Date) {
   }).format(date);
 }
 
+function assignmentDescription(activity: {
+  type: string;
+  metadata: unknown;
+}) {
+  if (
+    activity.type !== "CHAMADO_ATRIBUIDO" &&
+    activity.type !== "CHAMADO_REATRIBUIDO"
+  ) {
+    return null;
+  }
+  if (
+    typeof activity.metadata !== "object" ||
+    activity.metadata === null ||
+    Array.isArray(activity.metadata)
+  ) {
+    return null;
+  }
+
+  const metadata = activity.metadata as Record<string, unknown>;
+  const previousName =
+    typeof metadata.previousAgentName === "string"
+      ? metadata.previousAgentName
+      : null;
+  const newName =
+    typeof metadata.newAgentName === "string"
+      ? metadata.newAgentName
+      : null;
+
+  if (!newName) return null;
+  return previousName ? `${previousName} -> ${newName}` : `Responsavel: ${newName}`;
+}
+
 export default async function TicketDetailsPage({
   params,
 }: {
@@ -70,7 +102,11 @@ export default async function TicketDetailsPage({
   if (!canViewTicket(session.user, ticket)) redirect("/acesso-negado");
 
   const backHref =
-    session.user.role === "AGENTE" ? "/meus-atendimentos" : "/chamados";
+    session.user.role === "AGENTE"
+      ? "/meus-atendimentos"
+      : session.user.role === "ADMIN"
+        ? "/admin/chamados"
+        : "/chamados";
 
   return (
     <div className="space-y-8">
@@ -183,7 +219,11 @@ export default async function TicketDetailsPage({
                       {formatDate(activity.createdAt)}
                     </time>
                   </div>
-                  {activity.previousValue && activity.newValue ? (
+                  {assignmentDescription(activity) ? (
+                    <p className="mt-3 text-sm text-slate-600">
+                      {assignmentDescription(activity)}
+                    </p>
+                  ) : activity.previousValue && activity.newValue ? (
                     <p className="mt-3 text-sm text-slate-600">
                       {statusLabels[activity.previousValue as keyof typeof statusLabels] ??
                         priorityLabels[activity.previousValue as keyof typeof priorityLabels] ??
