@@ -12,8 +12,8 @@ const navigation = {
   ADMIN: [
     { href: "/admin", label: "Usuarios" },
     { href: "/admin/categorias", label: "Categorias" },
+    { href: "/admin/chamados", label: "Chamados" },
     { href: "/fila", label: "Fila" },
-    { href: "/chamados", label: "Chamados" },
   ],
 };
 
