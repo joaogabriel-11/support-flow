@@ -10,7 +10,8 @@ const navigation = {
     { href: "/meus-atendimentos", label: "Meus atendimentos" },
   ],
   ADMIN: [
-    { href: "/admin", label: "Administracao" },
+    { href: "/admin", label: "Usuarios" },
+    { href: "/admin/categorias", label: "Categorias" },
     { href: "/fila", label: "Fila" },
     { href: "/chamados", label: "Chamados" },
   ],

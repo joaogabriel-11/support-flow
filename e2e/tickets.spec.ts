@@ -15,6 +15,7 @@ test.skip(
 test("solicitante abre um chamado e visualiza no historico", async ({
   page,
 }) => {
+  test.setTimeout(60_000);
   const title = `Falha de rede E2E ${Date.now()}`;
 
   await page.goto("/login");

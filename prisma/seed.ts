@@ -72,13 +72,21 @@ async function main() {
   });
 
   await Promise.all(
-    INITIAL_CATEGORIES.map((name) =>
-      prisma.category.upsert({
-        where: { name },
-        update: { isActive: true },
-        create: { name, isActive: true },
-      }),
-    ),
+    INITIAL_CATEGORIES.map(async (name) => {
+      const existing = await prisma.category.findFirst({
+        where: { name: { equals: name, mode: "insensitive" } },
+        select: { id: true },
+      });
+
+      return existing
+        ? prisma.category.update({
+            where: { id: existing.id },
+            data: { name, isActive: true },
+          })
+        : prisma.category.create({
+            data: { name, isActive: true },
+          });
+    }),
   );
 
   console.log(
