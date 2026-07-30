@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { authenticateUser } from "@/features/auth/authenticate-user";
 import { prismaAuthDependencies } from "@/features/auth/prisma-auth-dependencies";
+import { refreshSessionAuthorization } from "@/features/auth/refresh-session-authorization";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
@@ -25,12 +26,20 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
         token.isActive = user.isActive;
+        return token;
       }
+
+      const authorization = await refreshSessionAuthorization(
+        String(token.id ?? token.sub ?? ""),
+        prismaAuthDependencies,
+      );
+      token.role = authorization.role;
+      token.isActive = authorization.isActive;
 
       return token;
     },
