@@ -1,9 +1,8 @@
 import { CommentForm } from "@/app/chamados/[id]/comment-form";
-import { canViewTicket } from "@/features/tickets/can-view-ticket";
 import { prisma } from "@/lib/prisma";
 import { requireActiveSession } from "@/lib/server-authorization";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 const statusLabels = {
   ABERTO: "Aberto",
@@ -75,8 +74,15 @@ export default async function TicketDetailsPage({
 }) {
   const session = await requireActiveSession();
   const { id } = await params;
-  const ticket = await prisma.ticket.findUnique({
-    where: { id },
+  const ticket = await prisma.ticket.findFirst({
+    where: {
+      id,
+      ...(session.user.role === "SOLICITANTE"
+        ? { requesterId: session.user.id }
+        : session.user.role === "AGENTE"
+          ? { agentId: session.user.id }
+          : {}),
+    },
     include: {
       category: { select: { name: true } },
       requester: { select: { name: true, email: true } },
@@ -99,7 +105,6 @@ export default async function TicketDetailsPage({
   });
 
   if (!ticket) notFound();
-  if (!canViewTicket(session.user, ticket)) redirect("/acesso-negado");
 
   const backHref =
     session.user.role === "AGENTE"

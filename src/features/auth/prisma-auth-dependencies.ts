@@ -3,6 +3,16 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
 export const prismaAuthDependencies = {
+  findAuthorizationById(userId: string) {
+    return prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        role: true,
+        isActive: true,
+      },
+    });
+  },
+
   findUserByEmail(email: string) {
     return prisma.user.findUnique({
       where: { email },

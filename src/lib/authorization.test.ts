@@ -14,4 +14,17 @@ describe("rolesForPath", () => {
       "ADMIN",
     ]);
   });
+
+  it("restringe fila, atendimentos e administracao por papel", () => {
+    expect(rolesForPath("/fila")).toEqual(["AGENTE", "ADMIN"]);
+    expect(rolesForPath("/meus-atendimentos")).toEqual(["AGENTE"]);
+    expect(rolesForPath("/admin")).toEqual(["ADMIN"]);
+    expect(rolesForPath("/admin/categorias")).toEqual(["ADMIN"]);
+    expect(rolesForPath("/admin/chamados")).toEqual(["ADMIN"]);
+  });
+
+  it("nao classifica rotas publicas como privadas", () => {
+    expect(rolesForPath("/login")).toBeUndefined();
+    expect(rolesForPath("/acesso-negado")).toBeUndefined();
+  });
 });
