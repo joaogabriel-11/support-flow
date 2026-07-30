@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth";
+import { notifyTicketCreated } from "@/features/notifications/ticket-email-notifications";
 import { createTicket } from "@/features/tickets/create-ticket";
 import { prismaTicketDependencies } from "@/features/tickets/prisma-ticket-dependencies";
 
@@ -51,6 +52,7 @@ export async function createTicketAction(
       return { success: false, errors: result.errors };
     }
 
+    await notifyTicketCreated(result.ticket.id);
     revalidatePath("/chamados");
 
     return {

@@ -274,28 +274,16 @@ Integração via **Resend**.
 
 Regra geral:
 
-> O autor de uma ação não recebe e-mail sobre a própria ação, exceto quando houver uma confirmação explícita prevista pelo sistema, como a confirmação de abertura de um chamado.
-
-| Evento                                      | Destinatário(s)                                                        |
-| ------------------------------------------- | ---------------------------------------------------------------------- |
-| Chamado criado                              | Solicitante recebe confirmação + todos os agentes ativos recebem aviso |
-| Agente assume chamado da fila               | Solicitante                                                            |
-| Admin atribui chamado a um agente           | Solicitante + agente escolhido                                         |
-| Admin reatribui chamado                     | Solicitante + novo agente responsável                                  |
-| Mudança de status                           | Solicitante                                                            |
-| Comentário público do solicitante           | Agente responsável                                                     |
-| Comentário público do agente                | Solicitante                                                            |
-| Comentário público do admin                 | Solicitante + agente responsável, quando aplicável                     |
-| Nota interna criada pelo admin              | Agente responsável, se existir                                         |
-| Nota interna criada pelo agente responsável | Nenhum e-mail                                                          |
+| Evento            | Destinatário(s)          |
+| ----------------- | ------------------------ |
+| Chamado criado    | Todos os agentes ativos  |
+| Chamado resolvido | Solicitante do chamado   |
 
 Regras adicionais:
 
-- O conteúdo do e-mail de mudança de status varia conforme o novo status.
-- Não existem e-mails separados para `RESOLVIDO` e `FECHADO`; ambos são cobertos pelo evento de mudança de status.
-- Notas internas nunca notificam o solicitante.
-- Admins não recebem automaticamente notificações de notas internas no MVP.
 - Usuários desativados não recebem notificações.
+- Atribuições, reatribuições, comentários e notas internas não geram e-mails.
+- Administradores não recebem notificações automáticas.
 - O envio de e-mail é implementado após o fluxo principal.
 - Ordem de implementação:
   1. chamados;

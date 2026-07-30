@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth";
+import { notifyTicketResolved } from "@/features/notifications/ticket-email-notifications";
 import { prismaStatusDependencies } from "@/features/tickets/prisma-status-dependencies";
 import { completeTicket } from "@/features/tickets/update-ticket-status";
 
@@ -47,6 +48,7 @@ export async function completeTicketAction(
       };
     }
 
+    await notifyTicketResolved(result.ticket.id);
     revalidatePath("/meus-atendimentos");
     revalidatePath("/chamados");
 
