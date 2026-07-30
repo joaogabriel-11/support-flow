@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth";
+import { notifyTicketResolved } from "@/features/notifications/ticket-email-notifications";
 import { adminAssignTicket } from "@/features/tickets/admin-assign-ticket";
 import { prismaAdminAssignmentDependencies } from "@/features/tickets/prisma-admin-assignment-dependencies";
 import { prismaStatusDependencies } from "@/features/tickets/prisma-status-dependencies";
@@ -102,6 +103,7 @@ export async function completeTicketByAdminAction(
       };
     }
 
+    await notifyTicketResolved(ticketId);
     revalidateTicketPages(ticketId);
     return {
       success: true,
