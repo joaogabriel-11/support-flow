@@ -3,6 +3,9 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Support Flow",
+  icons: {
+    icon: "/favicon.ico",
+  },
   description: "Gestão de chamados de suporte",
 };
 
